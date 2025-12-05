@@ -13,7 +13,7 @@ export function useSupabasePersistence(
     const [isLoaded, setIsLoaded] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // 1. Check Auth Session
+    // 1. Check Auth Sessionddfa
     useEffect(() => {
         if (!supabase) return;
         supabase.auth.getSession().then(({ data: { session } }) => {
