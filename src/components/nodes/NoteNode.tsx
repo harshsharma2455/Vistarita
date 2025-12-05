@@ -25,6 +25,8 @@ type NoteNodeData = {
     bold?: boolean;
     italic?: boolean;
     align?: 'left' | 'center' | 'right';
+    fontSize?: 'small' | 'medium' | 'large' | 'xl';
+    fontFamily?: 'sans' | 'serif' | 'mono';
 };
 
 type NoteNode = Node<NoteNodeData, 'note'>;
@@ -37,6 +39,19 @@ const PASTEL_COLORS = [
     '#D4FFEA', // Pastel Green
     '#FFF4BD', // Pastel Yellow
 ];
+
+const FONT_SIZES = {
+    small: '0.875rem',
+    medium: '1rem',
+    large: '1.25rem',
+    xl: '1.5rem',
+};
+
+const FONT_FAMILIES = {
+    sans: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    serif: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
+    mono: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+};
 
 const SHADOW_OPTIONS = [
     'none',
@@ -61,6 +76,8 @@ export function NoteNode({ id, data, selected }: NodeProps<NoteNode>) {
     const [isBold, setIsBold] = useState(data.bold || false);
     const [isItalic, setIsItalic] = useState(data.italic || false);
     const [textAlign, setTextAlign] = useState(data.align || 'left');
+    const [fontSize, setFontSize] = useState<NoteNodeData['fontSize']>(data.fontSize || 'medium');
+    const [fontFamily, setFontFamily] = useState<NoteNodeData['fontFamily']>(data.fontFamily || 'sans');
 
     useEffect(() => {
         setText(data.text || '');
@@ -69,6 +86,8 @@ export function NoteNode({ id, data, selected }: NodeProps<NoteNode>) {
         setIsBold(data.bold || false);
         setIsItalic(data.italic || false);
         setTextAlign(data.align || 'left');
+        setFontSize(data.fontSize || 'medium');
+        setFontFamily(data.fontFamily || 'sans');
     }, [data]);
 
     // Auto-resize textarea
@@ -141,6 +160,8 @@ export function NoteNode({ id, data, selected }: NodeProps<NoteNode>) {
         if (key === 'bold') setIsBold(value);
         if (key === 'italic') setIsItalic(value);
         if (key === 'align') setTextAlign(value);
+        if (key === 'fontSize') setFontSize(value);
+        if (key === 'fontFamily') setFontFamily(value);
 
         updateNodeData(id, { [key]: value });
     };
@@ -179,6 +200,20 @@ export function NoteNode({ id, data, selected }: NodeProps<NoteNode>) {
                     <button onClick={() => handleStyleChange('italic', !isItalic)} className={`p-1 rounded hover:bg-gray-100 ${isItalic ? 'bg-gray-200 text-black' : ''}`}><Italic size={16} /></button>
                 </div>
 
+                {/* Font Size */}
+                <div className="flex gap-1 border-r border-gray-200 pr-2 text-gray-600">
+                    <button onClick={() => handleStyleChange('fontSize', 'small')} className={`p-1 rounded hover:bg-gray-100 ${fontSize === 'small' ? 'bg-gray-200 text-black' : ''} text-xs font-bold`}>A</button>
+                    <button onClick={() => handleStyleChange('fontSize', 'medium')} className={`p-1 rounded hover:bg-gray-100 ${fontSize === 'medium' ? 'bg-gray-200 text-black' : ''} text-sm font-bold`}>A</button>
+                    <button onClick={() => handleStyleChange('fontSize', 'large')} className={`p-1 rounded hover:bg-gray-100 ${fontSize === 'large' ? 'bg-gray-200 text-black' : ''} text-lg font-bold`}>A</button>
+                </div>
+
+                {/* Font Family */}
+                <div className="flex gap-1 border-r border-gray-200 pr-2 text-gray-600">
+                    <button onClick={() => handleStyleChange('fontFamily', 'sans')} className={`p-1 rounded hover:bg-gray-100 ${fontFamily === 'sans' ? 'bg-gray-200 text-black' : ''} font-sans`} title="Sans-Serif">S</button>
+                    <button onClick={() => handleStyleChange('fontFamily', 'serif')} className={`p-1 rounded hover:bg-gray-100 ${fontFamily === 'serif' ? 'bg-gray-200 text-black' : ''} font-serif`} title="Serif">S</button>
+                    <button onClick={() => handleStyleChange('fontFamily', 'mono')} className={`p-1 rounded hover:bg-gray-100 ${fontFamily === 'mono' ? 'bg-gray-200 text-black' : ''} font-mono`} title="Monospace">M</button>
+                </div>
+
                 {/* Alignment */}
                 <div className="flex gap-1 text-gray-600">
                     <button onClick={() => handleStyleChange('align', 'left')} className={`p-1 rounded hover:bg-gray-100 ${textAlign === 'left' ? 'bg-gray-200 text-black' : ''}`}><AlignLeft size={16} /></button>
@@ -188,19 +223,21 @@ export function NoteNode({ id, data, selected }: NodeProps<NoteNode>) {
             </NodeToolbar>
 
             {/* Settings Toggle Button (Top Right) */}
-            {selected && (
-                <div
-                    className="absolute -top-3 -right-3 z-50 origin-bottom-left"
-                    style={{ transform: `scale(${scale})` }}
-                >
-                    <button
-                        onClick={(e) => { e.stopPropagation(); setShowSettings(!showSettings); }}
-                        className="p-1.5 bg-white rounded-full shadow-md text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors border border-gray-100"
+            {
+                selected && (
+                    <div
+                        className="absolute -top-3 -right-3 z-50 origin-bottom-left"
+                        style={{ transform: `scale(${scale})` }}
                     >
-                        <Settings size={14} />
-                    </button>
-                </div>
-            )}
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setShowSettings(!showSettings); }}
+                            className="p-1.5 bg-white rounded-full shadow-md text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors border border-gray-100"
+                        >
+                            <Settings size={14} />
+                        </button>
+                    </div>
+                )
+            }
 
             {/* Main Node Content */}
             <div className="relative w-full h-full group">
@@ -233,6 +270,8 @@ export function NoteNode({ id, data, selected }: NodeProps<NoteNode>) {
                                     fontWeight: isBold ? 'bold' : 'normal',
                                     fontStyle: isItalic ? 'italic' : 'normal',
                                     textAlign: textAlign,
+                                    fontSize: FONT_SIZES[fontSize || 'medium'],
+                                    fontFamily: FONT_FAMILIES[fontFamily || 'sans'],
                                 }}
                                 placeholder="Type here..."
                                 value={text}
@@ -252,6 +291,8 @@ export function NoteNode({ id, data, selected }: NodeProps<NoteNode>) {
                                     fontWeight: isBold ? 'bold' : 'normal',
                                     fontStyle: isItalic ? 'italic' : 'normal',
                                     textAlign: textAlign,
+                                    fontSize: FONT_SIZES[fontSize || 'medium'],
+                                    fontFamily: FONT_FAMILIES[fontFamily || 'sans'],
                                 }}
                             >
                                 {text || <span className="text-black/20 italic">Double click to edit</span>}
