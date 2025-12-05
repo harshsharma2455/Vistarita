@@ -7,7 +7,16 @@ export function useSupabasePersistence(
     nodes: Node[],
     edges: Edge[],
     setNodes: (nodes: Node[]) => void,
-    setEdges: (edges: Edge[]) => void
+    setEdges: (edges: Edge[]) => void,
+    // Settings State
+    theme: string,
+    setTheme: (t: string) => void,
+    gridType: 'dots' | 'lines',
+    setGridType: (t: 'dots' | 'lines') => void,
+    showGrid: boolean,
+    setShowGrid: (v: boolean) => void,
+    snapToGrid: boolean,
+    setSnapToGrid: (v: boolean) => void
 ) {
     const [session, setSession] = useState<Session | null>(null);
     const [canvasId, setCanvasId] = useState<string | null>(null);
@@ -57,6 +66,16 @@ export function useSupabasePersistence(
                     if (canvas.content) {
                         setNodes(canvas.content.nodes || []);
                         setEdges(canvas.content.edges || []);
+
+                        // Load Settings if they exist
+                        if (canvas.content.settings) {
+                            const s = canvas.content.settings;
+                            if (s.theme) setTheme(s.theme);
+                            if (s.gridType) setGridType(s.gridType);
+                            // Explicit check for boolean to avoid overwriting with undefined
+                            if (typeof s.showGrid === 'boolean') setShowGrid(s.showGrid);
+                            if (typeof s.snapToGrid === 'boolean') setSnapToGrid(s.snapToGrid);
+                        }
                     }
                 } else {
                     console.log('Creating new canvas...');
@@ -67,7 +86,13 @@ export function useSupabasePersistence(
                             {
                                 user_id: session.user.id,
                                 title: 'My First Canvas',
-                                content: { nodes: [], edges: [] },
+                                content: {
+                                    nodes: [],
+                                    edges: [],
+                                    settings: {
+                                        theme, gridType, showGrid, snapToGrid
+                                    }
+                                },
                             },
                         ])
                         .select()
@@ -86,7 +111,7 @@ export function useSupabasePersistence(
         };
 
         loadCanvas();
-    }, [session, setNodes, setEdges]);
+    }, [session, setNodes, setEdges, setTheme, setGridType, setShowGrid, setSnapToGrid]);
 
     // 3. Auto-Save
     useEffect(() => {
@@ -100,7 +125,16 @@ export function useSupabasePersistence(
                 const { error: saveError } = await supabase
                     .from('canvases')
                     .update({
-                        content: { nodes, edges },
+                        content: {
+                            nodes,
+                            edges,
+                            settings: {
+                                theme,
+                                gridType,
+                                showGrid,
+                                snapToGrid
+                            }
+                        },
                         updated_at: new Date().toISOString(),
                     })
                     .eq('id', canvasId);
@@ -114,7 +148,7 @@ export function useSupabasePersistence(
         }, 1000); // Debounce 1s
 
         return () => clearTimeout(save);
-    }, [nodes, edges, session, canvasId, isLoaded]);
+    }, [nodes, edges, theme, gridType, showGrid, snapToGrid, session, canvasId, isLoaded]);
 
     return { session, isLoaded, error };
 }

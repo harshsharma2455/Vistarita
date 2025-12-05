@@ -14,7 +14,9 @@ import {
     Italic,
     AlignLeft,
     AlignCenter,
-    AlignRight
+    AlignRight,
+    Palette,
+    ChevronDown
 } from 'lucide-react';
 import { SmartHandle } from '../SmartHandle';
 
@@ -25,7 +27,7 @@ type NoteNodeData = {
     bold?: boolean;
     italic?: boolean;
     align?: 'left' | 'center' | 'right';
-    fontSize?: 'small' | 'medium' | 'large' | 'xl';
+    fontSize?: number;
     fontFamily?: 'sans' | 'serif' | 'mono';
 };
 
@@ -39,13 +41,6 @@ const PASTEL_COLORS = [
     '#D4FFEA', // Pastel Green
     '#FFF4BD', // Pastel Yellow
 ];
-
-const FONT_SIZES = {
-    small: '0.875rem',
-    medium: '1rem',
-    large: '1.25rem',
-    xl: '1.5rem',
-};
 
 const FONT_FAMILIES = {
     sans: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
@@ -70,13 +65,14 @@ export function NoteNode({ id, data, selected }: NodeProps<NoteNode>) {
     const scale = Math.min(2.5, Math.max(1, 1 / zoom));
 
     // Local state for immediate feedback, should sync with data
+    const [showColorMenu, setShowColorMenu] = useState(false);
     const [text, setText] = useState(data.text || '');
     const [color, setColor] = useState(data.color || PASTEL_COLORS[0]);
     const [shadow, setShadow] = useState(data.shadow || SHADOW_OPTIONS[4]);
     const [isBold, setIsBold] = useState(data.bold || false);
     const [isItalic, setIsItalic] = useState(data.italic || false);
     const [textAlign, setTextAlign] = useState(data.align || 'left');
-    const [fontSize, setFontSize] = useState<NoteNodeData['fontSize']>(data.fontSize || 'medium');
+    const [fontSize, setFontSize] = useState<number>(data.fontSize || 16);
     const [fontFamily, setFontFamily] = useState<NoteNodeData['fontFamily']>(data.fontFamily || 'sans');
 
     useEffect(() => {
@@ -86,7 +82,7 @@ export function NoteNode({ id, data, selected }: NodeProps<NoteNode>) {
         setIsBold(data.bold || false);
         setIsItalic(data.italic || false);
         setTextAlign(data.align || 'left');
-        setFontSize(data.fontSize || 'medium');
+        setFontSize(data.fontSize || 16);
         setFontFamily(data.fontFamily || 'sans');
     }, [data]);
 
@@ -182,16 +178,45 @@ export function NoteNode({ id, data, selected }: NodeProps<NoteNode>) {
 
             {/* Settings Toolbar */}
             <NodeToolbar isVisible={selected && showSettings} position={Position.Top} className="flex gap-2 p-2 bg-white/90 backdrop-blur-md rounded-xl shadow-xl border border-white/50">
-                {/* Colors */}
-                <div className="flex gap-1 border-r border-gray-200 pr-2">
-                    {PASTEL_COLORS.map(c => (
-                        <button
-                            key={c}
-                            className={`w-6 h-6 rounded-full border border-gray-100 ${color === c ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
-                            style={{ backgroundColor: c }}
-                            onClick={() => handleStyleChange('color', c)}
-                        />
-                    ))}
+                {/* Consolidated Color Picker */}
+                <div className="relative border-r border-gray-200 pr-2 mr-2">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setShowColorMenu(!showColorMenu); }}
+                        className="p-1 rounded hover:bg-gray-100 flex items-center gap-1"
+                        title="Color Palette"
+                    >
+                        <Palette size={16} color={color} fill={color} />
+                        <ChevronDown size={12} className="text-gray-400" />
+                    </button>
+
+                    {showColorMenu && (
+                        <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 p-2 z-50 flex flex-col gap-2 min-w-[150px]">
+                            <div className="text-xs font-semibold text-gray-400 px-1">Presets</div>
+                            <div className="grid grid-cols-4 gap-1">
+                                {PASTEL_COLORS.map(c => (
+                                    <button
+                                        key={c}
+                                        className={`w-6 h-6 rounded-full border border-gray-100 ${color === c ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
+                                        style={{ backgroundColor: c }}
+                                        onClick={() => {
+                                            handleStyleChange('color', c);
+                                            setShowColorMenu(false);
+                                        }}
+                                    />
+                                ))}
+                            </div>
+                            <div className="border-t border-gray-100 my-1"></div>
+                            <div className="text-xs font-semibold text-gray-400 px-1">Custom</div>
+                            <div className="flex items-center gap-2 px-1">
+                                <input
+                                    type="color"
+                                    value={color}
+                                    onChange={(e) => handleStyleChange('color', e.target.value)}
+                                    className="w-full h-8 cursor-pointer rounded overflow-hidden"
+                                />
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Text Formatting */}
@@ -200,18 +225,30 @@ export function NoteNode({ id, data, selected }: NodeProps<NoteNode>) {
                     <button onClick={() => handleStyleChange('italic', !isItalic)} className={`p-1 rounded hover:bg-gray-100 ${isItalic ? 'bg-gray-200 text-black' : ''}`}><Italic size={16} /></button>
                 </div>
 
-                {/* Font Size */}
-                <div className="flex gap-1 border-r border-gray-200 pr-2 text-gray-600">
-                    <button onClick={() => handleStyleChange('fontSize', 'small')} className={`p-1 rounded hover:bg-gray-100 ${fontSize === 'small' ? 'bg-gray-200 text-black' : ''} text-xs font-bold`}>A</button>
-                    <button onClick={() => handleStyleChange('fontSize', 'medium')} className={`p-1 rounded hover:bg-gray-100 ${fontSize === 'medium' ? 'bg-gray-200 text-black' : ''} text-sm font-bold`}>A</button>
-                    <button onClick={() => handleStyleChange('fontSize', 'large')} className={`p-1 rounded hover:bg-gray-100 ${fontSize === 'large' ? 'bg-gray-200 text-black' : ''} text-lg font-bold`}>A</button>
+                {/* Numeric Font Size */}
+                <div className="flex items-center gap-1 border-r border-gray-200 pr-2 text-gray-600">
+                    <input
+                        type="number"
+                        min={12}
+                        max={72}
+                        value={fontSize}
+                        onChange={(e) => handleStyleChange('fontSize', parseInt(e.target.value))}
+                        className="w-12 p-1 text-sm border border-gray-200 rounded text-center focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    />
+                    <span className="text-xs text-gray-400">px</span>
                 </div>
 
-                {/* Font Family */}
-                <div className="flex gap-1 border-r border-gray-200 pr-2 text-gray-600">
-                    <button onClick={() => handleStyleChange('fontFamily', 'sans')} className={`p-1 rounded hover:bg-gray-100 ${fontFamily === 'sans' ? 'bg-gray-200 text-black' : ''} font-sans`} title="Sans-Serif">S</button>
-                    <button onClick={() => handleStyleChange('fontFamily', 'serif')} className={`p-1 rounded hover:bg-gray-100 ${fontFamily === 'serif' ? 'bg-gray-200 text-black' : ''} font-serif`} title="Serif">S</button>
-                    <button onClick={() => handleStyleChange('fontFamily', 'mono')} className={`p-1 rounded hover:bg-gray-100 ${fontFamily === 'mono' ? 'bg-gray-200 text-black' : ''} font-mono`} title="Monospace">M</button>
+                {/* Font Family Dropdown */}
+                <div className="flex items-center border-r border-gray-200 pr-2 text-gray-600">
+                    <select
+                        value={fontFamily}
+                        onChange={(e) => handleStyleChange('fontFamily', e.target.value)}
+                        className="p-1 text-sm bg-transparent border-none outline-none focus:ring-0 cursor-pointer w-20"
+                    >
+                        <option value="sans">Sans</option>
+                        <option value="serif">Serif</option>
+                        <option value="mono">Mono</option>
+                    </select>
                 </div>
 
                 {/* Alignment */}
@@ -270,7 +307,7 @@ export function NoteNode({ id, data, selected }: NodeProps<NoteNode>) {
                                     fontWeight: isBold ? 'bold' : 'normal',
                                     fontStyle: isItalic ? 'italic' : 'normal',
                                     textAlign: textAlign,
-                                    fontSize: FONT_SIZES[fontSize || 'medium'],
+                                    fontSize: `${fontSize}px`,
                                     fontFamily: FONT_FAMILIES[fontFamily || 'sans'],
                                 }}
                                 placeholder="Type here..."
@@ -291,7 +328,7 @@ export function NoteNode({ id, data, selected }: NodeProps<NoteNode>) {
                                     fontWeight: isBold ? 'bold' : 'normal',
                                     fontStyle: isItalic ? 'italic' : 'normal',
                                     textAlign: textAlign,
-                                    fontSize: FONT_SIZES[fontSize || 'medium'],
+                                    fontSize: `${fontSize}px`,
                                     fontFamily: FONT_FAMILIES[fontFamily || 'sans'],
                                 }}
                             >

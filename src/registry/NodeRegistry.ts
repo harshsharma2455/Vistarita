@@ -7,6 +7,8 @@ import { NoteNode } from '../components/nodes/NoteNode';
 import { PDFNode } from '../components/nodes/PDFNode';
 import { TableNode } from '../components/nodes/TableNode';
 
+import { ShapeNode } from '../components/nodes/ShapeNode';
+
 export interface NodeDefinition {
     type: string;
     label: string;
@@ -20,6 +22,12 @@ export const nodeRegistry: Record<string, NodeDefinition> = {
         label: 'Note',
         component: NoteNode,
         defaultData: { text: 'New Note' },
+    },
+    shape: {
+        type: 'shape',
+        label: 'Shape',
+        component: ShapeNode,
+        defaultData: { shapeType: 'rectangle', text: '', color: '#e2e8f0' },
     },
     code: {
         type: 'code',
