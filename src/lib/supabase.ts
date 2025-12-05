@@ -17,4 +17,4 @@ const isValidUrl = (url: string) => {
 
 export const supabase = (isValidUrl(supabaseUrl || '') && supabaseAnonKey)
     ? createClient(supabaseUrl!, supabaseAnonKey!)
-    : null as any; // Cast to any to avoid TS errors in other files for now, we'll handle null checks in App.tsx
+    : null;

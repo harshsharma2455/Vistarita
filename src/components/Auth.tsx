@@ -12,6 +12,11 @@ export function Auth() {
         e.preventDefault();
         setLoading(true);
         setMessage('');
+        if (!supabase) {
+            setMessage('Supabase client not initialized');
+            setLoading(false);
+            return;
+        }
 
         try {
             if (isLogin) {

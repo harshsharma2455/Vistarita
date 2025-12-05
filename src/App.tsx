@@ -235,6 +235,7 @@ function App() {
             });
 
             Array.from(files).forEach(async (file) => {
+                if (!supabase) return;
                 const id = Math.random().toString(36).substr(2, 9);
                 let newNode: Node | null = null;
 

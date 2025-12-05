@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Node, Edge } from '@xyflow/react';
+import { Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 
 export function useSupabasePersistence(
@@ -8,7 +9,7 @@ export function useSupabasePersistence(
     setNodes: (nodes: Node[]) => void,
     setEdges: (edges: Edge[]) => void
 ) {
-    const [session, setSession] = useState<any>(null);
+    const [session, setSession] = useState<Session | null>(null);
     const [canvasId, setCanvasId] = useState<string | null>(null);
     const [isLoaded, setIsLoaded] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -17,12 +18,12 @@ export function useSupabasePersistence(
     useEffect(() => {
         if (!supabase) return;
         supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session);
+            setSession(session as Session | null);
         });
 
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
+        } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
             setSession(session);
         });
 
@@ -32,8 +33,10 @@ export function useSupabasePersistence(
     // 2. Load or Create Canvas for User
     useEffect(() => {
         if (!session?.user) return;
+        if (!supabase) return;
 
         const loadCanvas = async () => {
+            if (!supabase) return;
             try {
                 setError(null);
                 console.log('Loading canvas for user:', session.user.id);
@@ -88,8 +91,10 @@ export function useSupabasePersistence(
     // 3. Auto-Save
     useEffect(() => {
         if (!session?.user || !canvasId || !isLoaded) return;
+        if (!supabase) return;
 
         const save = setTimeout(async () => {
+            if (!supabase) return;
             try {
                 console.log('Auto-saving...');
                 const { error: saveError } = await supabase
